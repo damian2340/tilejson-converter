@@ -1,0 +1,19 @@
+import numpy as np
+
+rot90 = [[0.95317991371353, -0.332138445861544, 0.4795188785373789], [-3.571763283578787e-17, -0.9186528552536825, -0.6363043151938046], [0.5833132109708019, 0.5427404852366688, -0.7835717667144457]]
+rotNo90 = [[0.95317991371353,  -0.332138445861544, 0.4795188785373789], [-0.5833132109708019, -0.5427404852366688, 0.7835717667144457], [0, -0.9186528552536825, -0.6363043151938046]]
+translation = [3171.794442, -4884.134495, 8419.26857]
+normal = [0.42812584, -0.69959147, -0.5681076]
+a = np.dot(translation, np.transpose(rotNo90))
+b = np.dot(np.transpose(rotNo90), translation)
+c = np.dot(translation, np.transpose(rot90))
+d = np.array(normal) * np.array(translation)
+e= np.dot(rotNo90, d)
+f= np.dot(rot90, d)
+
+print(a)
+print(b)
+print(c)
+print(d)
+print(e)
+print(f)

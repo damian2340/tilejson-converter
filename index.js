@@ -2,66 +2,82 @@ const fs = require("fs");
 const path = require("path");
 const { spawn } = require("child_process");
 
-const folderPath = "MESH 2021";
+const jsonPath =
+  "/Users/lopez/Code/kan/tilejson-converter/MESH 2021/L15/LR/6359_6158_-001_lv15_0.json";
+const outputPath = "/Users/lopez/Code/kan/b3dm sample/tileset.json";
 
-const readTileSet = (filePath) => {
-  return new Promise((resolve, reject) => {
-    fs.readFile(filePath, "utf8", (err, data) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-
-      resolve(data);
+const convert = (transform) => {
+  return new Promise((resolve) => {
+    const pyProcess = spawn("python3", [
+      "transformaciones.py",
+      ...transform.slice(12, 15),
+    ]);
+    pyProcess.stdout.on("data", function (data) {
+      const converted = JSON.parse(data);
+      resolve(converted);
     });
   });
 };
+const processChild = async ({
+  transform,
+  children,
+  content: { uri },
+  ...otherChild
+}, rootTransform) => {
+  return {
+    ...otherChild,
+    transform: transform && (rootTransform ? await convert(transform) : transform),
+    children:
+      children &&
+      (await Promise.all(
+        children
+          .filter(({ content: { uri } }) => uri?.indexOf("b3dm") > 0)
+          .map(processChild)
+      )),
+    content: {
+      uri: path.join("./MESH 2021/L15/LR", uri),
+    },
+    boundingVolume: {
+      box: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    },
+  };
+};
 
-const processTileset = (tilesset) => {
-  const { root, children } = tilesset;
-  const newTransform = [];
-  const newChildren
-  if (root.transform) {
-    console.log("convert", root.transform);
-    newTransform.push(1, 2, 3, 4);
-    tilesset.transform = newTransform;
-  }
-  tilesset.children = children?.map(({ child }) => {
-    
+/// Process root json
+new Promise((resolve, reject) => {
+  fs.readFile(jsonPath, "utf8", (err, data) => {
+    if (err) {
+      reject(err);
+      return;
+    }
+
+    resolve(data);
+  });
+})
+  .then((data) => JSON.parse(data))
+  .then(async ({ root, ...otherTileset }) => {
+    return {
+      ...otherTileset,
+      root: await processChild(root, true),
+    };
   })
+  .then((data) => JSON.stringify(data))
+  .then((data) => {
+    fs.writeFileSync("tileset.json", data);
+  });
 
-  return { tilesset, wasConverted: !!newTransform.length };
-};
+  /*
 
-const replaceFile = (filePath, tileset) => {
-  console.log({ filePath, tileset });
-};
+convert([
+  1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+  2739735.055245, -4476943.731842, -3611192.317842, 1.0
+]).then(console.log)
+  [
+      0.95317991371353, -0.332138445861544, 0.4795188785373789, 0,
+      -3.571763283578787e-17, -0.9186528552536825, -0.6363043151938046, 0,
+      0.5833132109708019, 0.5427404852366688, -0.7835717667144457, 0,
+      -6515835.74298203, -4123865.6167859375, -224.24348250683397, 1
+    ],
+  */
 
-const processRecursive = (filePath) => {
-  console.log(`Processing ${filePath}`);
-  readTileSet(filePath)
-    .then((data) => JSON.parse(data))
-    .then(processTileset)
-    .then(({ wasConverted, tilesset }) => {
-      if (wasConverted) {
-        replaceFile(filePath, tilesset);
-      }
-      tilesset.root.children
-        ?.map(({ content }) => content.uri)
-        .filter((uri) => uri?.endsWith(".json"))
-        .forEach((uri) => {
-          const dirname = path.dirname(filePath);
-          const nextPath = path.resolve(dirname, uri);
-          console.log(`processRecursive(${nextPath})`);
-          processRecursive(nextPath);
-        });
-    });
-};
-
-processRecursive(`${folderPath}/tileset.json`);
-// const pyProcess = spawn("python3", ["pythonFunction.py", 3, 6]);
-// pyProcess.stdout.on("data", function (data) {
-//   // convert Buffer object to Float
-//   const value = parseFloat(data);
-//   console.log(value);
-// });
+    // -10207.48265475841, 12015.938291085713, -6367876.548935372, 1
