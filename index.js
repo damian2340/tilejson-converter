@@ -3,8 +3,7 @@ const path = require("path");
 const { spawn } = require("child_process");
 
 const jsonPath =
-  "/Users/lopez/Code/kan/tilejson-converter/MESH 2021/L15/LR/6359_6158_-001_lv15_0.json";
-const outputPath = "/Users/lopez/Code/kan/b3dm sample/tileset.json";
+  `./MESH 2021/L15/LR/6359_6158_-001_lv15_0.json`;
 
 const convert = (transform) => {
   return new Promise((resolve) => {
