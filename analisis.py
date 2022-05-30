@@ -4,14 +4,16 @@ Created on Sat Apr 16 01:08:52 2022
 
 @author: damian
 """
+#%%
 import numpy as np
 import transformaciones as tr
 
-
+ 
 #%%
 #wgs84
 semiejeMayor = 6378137.0
 semiejeMenor = 6356752.31424
+
 
 f = (semiejeMayor-semiejeMenor)/semiejeMayor
 
@@ -47,6 +49,8 @@ zN = sPhi/(1-f)
 
 normal = np.array([xN, yN, zN])
 
+normalYup = np.dot(tr.rotate_angle_eje_x(np.pi/2), normal)
+print(normalYup)
 norma2Nxy = np.abs((1-f)*cPhi)
 
 cThetaN = cTheta
@@ -67,3 +71,5 @@ print("El semieje mayor de la tierra es de ", a/1000, "km")
 print("El semieje menor de la tierra es de ", b/1000, "km")
 print("la diferencia entre el semieje mayor encontrado y el wgs84 es", semiejeMayor-a)
 print("la diferencia entre el semieje menor encontrado y el wgs84 es", semiejeMenor-b)
+
+# %%
