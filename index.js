@@ -14,7 +14,6 @@ const readFileAsync = (jsonPath) =>
         reject(err);
         return;
       }
-
       resolve(data);
     });
   });
@@ -37,7 +36,7 @@ const convert = (transform, typeTransform) => {
   }
   return new Promise((resolve) => {
     console.log({typeTransform, transform})
-    const pyProcess = spawn("python3", [
+    const pyProcess = spawn("python", [
       "tileset_transform.py",
       typeTransform,
       ...rootTranslation,

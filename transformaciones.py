@@ -12,7 +12,6 @@ import numpy as np
 def deg2Rad(angle):
     return angle * np.pi / 180.0
 
-
 def translation_2_transform(translation):
     transform = np.identity(4)
 
@@ -20,7 +19,6 @@ def translation_2_transform(translation):
     transform[3, 1] = translation[1]
     transform[3, 2] = translation[2]
     return transform
-
 
 def rotate_eje_z(cos_angle, sin_angle):
     _rotation = np.identity(3)
@@ -31,7 +29,6 @@ def rotate_eje_z(cos_angle, sin_angle):
     _rotation[1, 1] = cos_angle
     return _rotation
 
-
 def rotate_eje_y(cos_angle, sin_angle):
     _rotation = np.identity(3)
     _rotation[0, 0] = cos_angle
@@ -39,7 +36,6 @@ def rotate_eje_y(cos_angle, sin_angle):
     _rotation[0, 2] = sin_angle
     _rotation[2, 2] = cos_angle
     return _rotation
-
 
 def rotate_eje_x(cos_angle, sin_angle):
     _rotation = np.identity(3)
@@ -49,7 +45,6 @@ def rotate_eje_x(cos_angle, sin_angle):
     _rotation[2, 1] = sin_angle
     _rotation[2, 2] = cos_angle
     return _rotation
-
 
 def rotate_angle_eje_x(angle):
     c = np.cos(angle)
@@ -62,7 +57,6 @@ def rotate_angle_eje_x(angle):
     transform[2, 2] = c
     return transform
 
-
 def rotate_angle_eje_y(angle):
     c = np.cos(angle)
     s = np.sin(angle)
@@ -73,7 +67,6 @@ def rotate_angle_eje_y(angle):
     transform[0, 2] = s
     transform[2, 2] = c
     return transform
-
 
 def rotate_angle_eje_z(angle):
     c = np.cos(angle)
@@ -86,10 +79,8 @@ def rotate_angle_eje_z(angle):
     transform[1, 1] = c
     return transform
 
-
 def norma2(vector):
     return np.linalg.norm(vector, 2)
-
 
 def transform_2_str(transform):
     salida = '['
@@ -113,7 +104,6 @@ def bounding_2_str(bounding):
             salida = salida + ', '
     salida = salida + ']'
     return salida
-
 
 def latLon_2_web_mercator(theta, phi):
     semiejeMayor = 6378137.0
@@ -200,7 +190,8 @@ class Rotator_b3dm:
 
     def get_transform(self):
         # rotar 90° para dejar el gltf en z-UP
-        rotation = np.dot( self.get_rotation(), rotate_angle_eje_x(np.pi/2))
+        rotation = self.get_rotation()
+        # rotation = np.dot( rotation, rotate_angle_eje_x(np.pi/2))
         rotation = rotation * self.scale
         trans = self.get_translacion_mercator()
         _transformacion = np.append(
@@ -216,11 +207,10 @@ class Rotator_b3dm:
         translation_org = np.array(
             [children_transf_org[3, 0], children_transf_org[3, 1], children_transf_org[3, 2]]).reshape(3, 1)
 
-        rot_children = rot_children_org#np.dot(rotate_angle_eje_x(np.pi/2), rot_children_org)
+        rot_children = rot_children_org
 
-        translation_children = np.dot(
-            rotate_angle_eje_x(np.pi/2), translation_org)
-        
+
+        translation_children = translation_org
 
         children_transform = np.append(rot_children.transpose(
         ), translation_children.transpose(), axis=0).transpose()
@@ -261,20 +251,21 @@ class Rotator_b3dm:
         return rotation
 
     def get_bounding(self, bv):
-        rotador_bv = rotate_eje_z(cos_angle = -self.s_theta_n , sin_angle = -self.c_theta_n )
-        rotador_bv = np.dot(rotate_eje_x(cos_angle = self.s_phi_n , sin_angle = -self.c_phi_n ), rotador_bv )
-        rotador_bv = np.dot(rotate_eje_x(cos_angle = self.s_phi_n , sin_angle = -self.c_phi_n ), rotador_bv )        
-        rotador_bv = np.dot(rotate_eje_z(cos_angle = -self.s_theta_n , sin_angle = -self.c_theta_n ), rotador_bv )
-        rotador_bv = np.dot(rotate_angle_eje_x(-np.pi / 2), rotador_bv )
+        ##elimino las rotasiones de los vectores d etamaña/direccion
+        
+        rotador_bv = rotate_eje_z(cos_angle = -self.s_theta_n , sin_angle = self.c_theta_n )
+        rotador_bv = np.dot(rotate_eje_x(cos_angle = self.s_phi_n , sin_angle = self.c_phi_n ), rotador_bv )
+
         
         [vector_centro, vector_i, vector_j, vector_k] = self.get_bounding_vectors(bv)
         
-        vector_centro_r = np.dot(rotador_bv, vector_centro )
-        vector_i_r = np.dot(rotador_bv, vector_i)
-        vector_j_r = np.dot(rotador_bv, vector_j)
-        vector_k_r = np.dot(rotador_bv, vector_k)
+        # vector_centro_r = np.dot(rotador_bv, vector_centro )
+        # vector_i_r = np.array([ norma2(vector_i), 0, 0]).reshape(3,1)
+        # vector_j_r = np.array([ 0, -norma2(vector_k), 0]).reshape(3,1)
+        # vector_k_r = np.array([   0, 0, norma2(vector_j)]).reshape(3,1)
     
-        return np.concatenate((vector_centro_r, vector_i_r, vector_j_r, vector_k_r ), axis = None)
+        #return np.concatenate((vector_centro_r, vector_i_r, vector_j_r, vector_k_r ), axis = None)
+        return np.concatenate((vector_centro, vector_i, vector_j, vector_k ), axis = None)
         
     def get_bounding_vectors(self, bv):
         vector_centro = np.array(bv[0:3]).reshape(3, 1)
@@ -297,35 +288,4 @@ class Rotator_b3dm:
         vector_k_r = np.dot(rotacion, vector_k)
         
         return [vector_centro_r, vector_i_r, vector_j_r, vector_k_r]
-
-
-# %%
-# traslacion_root = np.array([2739735.055245, -4476943.731842, -3611192.317842])
-
-# traslacion_child_L13_01 = np.array([3171.794442, -4884.134495, 8419.26857])
-
-# bounding_box = np.array([10253.349, 70.884, 7285.221, 
-#                           15477.211, 2468.064, 8727.283, 
-#                           -525.162, 856.024,690.996, 
-#                           -4745.655,-12553.827, 11966.256])
-
-
-# trRoot = Rotator_b3dm(translation_2_transform(traslacion_root), 1.2)
-# trRoot2 = Rotator_b3dm()
-# tranf = trRoot.get_transform()
-
-# print("la transformacion del root es: ")
-# print(transform_2_str(tranf))
-
-# tch = trRoot.get_children_transform((translation_2_transform(traslacion_child_L13_01)))
-# print("la transformacion del child es: ")
-# print(transform_2_str(tch))
-
-
-# bv_r = get_bounding(bounding_box)
-
-# print(bounding_2_str(bv_r))
-
-    
-    
     
